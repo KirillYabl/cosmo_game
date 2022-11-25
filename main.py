@@ -11,11 +11,6 @@ RIGHT_KEY_CODE = 261
 UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
 TIC_TIMEOUT = 0.1
-ROCKET_FRAMES = []
-
-for animation_num in [1, 2]:
-    with open(os.path.join('animations', f'rocket_frame_{animation_num}.txt')) as f:
-        ROCKET_FRAMES.append(f.read())
 
 
 def get_frame_size(text):
@@ -91,18 +86,17 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
 
 async def animate_spaceship(canvas, row, column, frames, spaceship_speed=1):
-    max_x, max_y = canvas.getmaxyx()
-    for frame_num, frame in enumerate(itertools.cycle(frames)):
-        for onetime_frame in range(len(frames)):
-            draw_frame(canvas, row, column, frames[onetime_frame], True)
+    max_x, max_y = get_real_maxyx(canvas)
+    for frame in itertools.cycle(frames):
+        for onetime_frame in frames:
+            draw_frame(canvas, row, column, onetime_frame, True)
         draw_frame(canvas, row, column, frame, False)
-        await asyncio.sleep(0)
         await asyncio.sleep(0)
         rows_direction, columns_direction, space_pressed = read_controls(canvas)
         rows_direction *= spaceship_speed
         columns_direction *= spaceship_speed
-        for onetime_frame in range(len(frames)):
-            draw_frame(canvas, row, column, frames[onetime_frame], True)
+        for onetime_frame in frames:
+            draw_frame(canvas, row, column, onetime_frame, True)
 
         frame_rows, frame_columns = get_frame_size(frame)
         while not (frame_rows < row + rows_direction + frame_rows < max_x):
@@ -162,38 +156,47 @@ async def blink(canvas, row, column, symbol='*'):
             await asyncio.sleep(0)
 
 
+def get_real_maxyx(canvas):
+    """Return fixed by 1 max_x and max_y cause canvas.getmaxyx truthfully return width and height of screen."""
+    width, height = canvas.getmaxyx()
+    max_x = width - 1
+    max_y = height - 1
+    return max_x, max_y
+
+
 def draw(canvas):
     canvas.border()
     canvas.nodelay(True)
     curses.curs_set(False)
-    max_x, max_y = canvas.getmaxyx()
+    max_x, max_y = get_real_maxyx(canvas)
     start_symbols = '+*.:'
     animation_frames = 4
 
+    rocket_frames = []
+    for animation_num in [1, 2]:
+        with open(os.path.join('animations', f'rocket_frame_{animation_num}.txt')) as f:
+            rocket_frames.append(f.read())
+
     coroutines = [
         fire(canvas, max_x // 2, max_y // 2),
-        animate_spaceship(canvas, max_x // 2, max_y // 2, ROCKET_FRAMES)
+        animate_spaceship(canvas, max_x // 2, max_y // 2, rocket_frames)
     ]
     for star_num in range(250):
-        x = random.randint(1, max_x - 2)
-        y = random.randint(1, max_y - 2)
-        star = blink(canvas, x, y, random.choice(list(start_symbols)))
+        border_width = 1
+        x = random.randint(border_width, max_x - border_width)
+        y = random.randint(border_width, max_y - border_width)
+        star = blink(canvas, x, y, random.choice(start_symbols))
         coroutines.append(star)
 
     while True:
-        for _ in range(animation_frames):
-            for coroutine in coroutines.copy():
-                try:
-                    coroutine.send(None)
-                except StopIteration:
-                    coroutines.remove(coroutine)
-                    canvas.border()
-            refresh_and_sleep(canvas, TIC_TIMEOUT)
-
-
-def refresh_and_sleep(canvas, sleep):
-    canvas.refresh()
-    time.sleep(sleep)
+        for coroutine in coroutines.copy():
+            try:
+                coroutine.send(None)
+            except StopIteration:
+                coroutines.remove(coroutine)
+                canvas.border()
+        canvas.refresh()
+        time.sleep(TIC_TIMEOUT)
 
 
 if __name__ == '__main__':
