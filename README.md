@@ -5,13 +5,21 @@ This code is a terminal space adventure game.
 ### How to install
 
 Python3 should be already installed.
-The program does not work on Windows.
+
+#### If you have Windows OS
+You should install `windows-curses` [package](https://pypi.org/project/windows-curses/), by write in cmd:
+```
+pip install windows-curses
+```
+
+**Read the package documentation carefully to see if your version of Python is supported by the library.**
 
 ### How to use
 
 Open command line (in windows `Win+R` and write `cmd` and `Ok`). Go to directory with program or just write in cmd:
-
-`python3 main.py`
+```
+python main.py
+```
 
 #### Rules
 
