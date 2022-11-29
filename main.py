@@ -88,23 +88,25 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 async def animate_spaceship(canvas, row, column, frames, spaceship_speed=1):
     max_x, max_y = get_real_maxyx(canvas)
     for frame in itertools.cycle(frames):
-        for onetime_frame in frames:
-            draw_frame(canvas, row, column, onetime_frame, True)
-        draw_frame(canvas, row, column, frame, False)
-        await asyncio.sleep(0)
         rows_direction, columns_direction, space_pressed = read_controls(canvas)
         rows_direction *= spaceship_speed
         columns_direction *= spaceship_speed
+
+        # update coordinates
+        frame_rows, frame_columns = get_frame_size(frame)
+
+        planned_rows = row + rows_direction
+        row = max(1, planned_rows) if rows_direction < 0 else min(max_x - frame_rows, planned_rows)
+
+        planned_columns = column + columns_direction
+        column = max(1, planned_columns) if columns_direction < 0 else min(max_y - frame_columns, planned_columns)
+
+        draw_frame(canvas, row, column, frame, False)
+
+        await asyncio.sleep(0)
+
         for onetime_frame in frames:
             draw_frame(canvas, row, column, onetime_frame, True)
-
-        frame_rows, frame_columns = get_frame_size(frame)
-        while not (frame_rows < row + rows_direction + frame_rows < max_x):
-            rows_direction = rows_direction + 1 if rows_direction < 0 else rows_direction - 1
-        while not (frame_columns < column + columns_direction + frame_columns < max_y):
-            columns_direction = columns_direction + 1 if columns_direction < 0 else columns_direction - 1
-        row = row + rows_direction
-        column = column + columns_direction
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -170,7 +172,6 @@ def draw(canvas):
     curses.curs_set(False)
     max_x, max_y = get_real_maxyx(canvas)
     start_symbols = '+*.:'
-    animation_frames = 4
 
     rocket_frames = []
     for animation_num in [1, 2]:
