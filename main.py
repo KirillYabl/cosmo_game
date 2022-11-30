@@ -105,8 +105,7 @@ async def animate_spaceship(canvas, row, column, frames, spaceship_speed=1):
 
         await asyncio.sleep(0)
 
-        for onetime_frame in frames:
-            draw_frame(canvas, row, column, onetime_frame, True)
+        draw_frame(canvas, row, column, frame, True)
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
