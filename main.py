@@ -200,13 +200,14 @@ async def show_obstacles(canvas):
         for drawn_frame in drawn_frames:
             draw_frame(canvas, *drawn_frame, negative=True)
 
-        to_delete = []
-        for obstacle in OBSTACLES:
-            if obstacle.row >= rows_number:
-                to_delete.append(obstacle)
 
+async def remove_obstacles(canvas):
+    rows_number, columns_number = canvas.getmaxyx()
+    while True:
+        to_delete = [obstacle for obstacle in OBSTACLES if obstacle.row >= rows_number]
         for obstacle in to_delete:
             OBSTACLES.remove(obstacle)
+        await asyncio.sleep(0)
 
 
 async def show_gameover(canvas):
@@ -280,6 +281,7 @@ def draw(canvas):
         animate_spaceship(canvas, max_x // 2, max_y // 2, rocket_frames),
         fill_orbit_with_garbage(canvas, garbage_frames),
         # show_obstacles(canvas), # uncomment it if you need show obstacles
+        remove_obstacles(canvas),
         show_current_year_and_phrases(canvas),
     ]
     for star_num in range(250):
